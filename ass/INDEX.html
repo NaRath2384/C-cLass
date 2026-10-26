@@ -77,7 +77,7 @@
                 <!-- Logo & Title -->
                 <div class="flex items-center space-x-3 space-x-reverse">
                     <div class="bg-white/10 p-2.5 rounded-xl backdrop-blur-md border border-white/20">
-                        <i class="fa-solid fa-[# graduation-cap] fa-user-graduate text-2xl text-amber-300"></i>
+                        <i class="fa-solid fa-user-graduate text-2xl text-amber-300"></i>
                     </div>
                     <div>
                         <h1 class="font-bold text-lg leading-tight sm:text-xl">ប្រព័ន្ធគ្រប់គ្រងវត្តមានសិស្ស</h1>
@@ -91,6 +91,12 @@
                         <div id="liveClock" class="text-xs font-semibold text-brand-100">--:--:--</div>
                         <div id="liveDate" class="text-xs opacity-75">--/--/----</div>
                     </div>
+                    
+                    <!-- Role Indicator & Login/Logout Button -->
+                    <div id="authStatusContainer" class="flex items-center space-x-2">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
                     <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-medium px-3 py-2 rounded-lg flex items-center transition shadow-sm active:scale-95" title="ទាញយកជា CSV">
                         <i class="fa-solid fa-file-excel mr-0 sm:mr-1.5 text-base"></i>
                         <span class="hidden sm:inline">ទាញយក CSV</span>
@@ -103,6 +109,12 @@
             </div>
         </div>
     </header>
+
+    <!-- Role Notice Banner for Visitors -->
+    <div id="visitorBanner" class="bg-amber-500/10 border-b border-amber-500/20 text-amber-800 text-xs py-2 px-4 text-center font-medium hidden no-print">
+        <i class="fa-solid fa-eye mr-1.5 text-amber-600"></i>
+        អ្នកកំពុងមើលក្នុងនាមជា <strong>អ្នកចូលមើល (Visitor)</strong>។ ដើម្បីបន្ថែម ឬកែប្រែព័ត៌មានសិស្ស និងស្រង់វត្តមាន សូមចុច <strong>"ចូលប្រព័ន្ធ"</strong> ខាងលើ។
+    </div>
 
     <!-- Main Navigation Tabs -->
     <div class="bg-white border-b border-slate-200 sticky top-16 z-20 shadow-sm no-print">
@@ -158,7 +170,7 @@
                     </div>
                     <!-- Mark All Button -->
                     <div>
-                        <button onclick="markAllPresent()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-medium py-2 px-4 rounded-xl transition flex items-center justify-center space-x-2 text-sm active:scale-95 shadow-sm">
+                        <button id="markAllBtn" onclick="markAllPresent()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-medium py-2 px-4 rounded-xl transition flex items-center justify-center space-x-2 text-sm active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                             <i class="fa-solid fa-check-double text-emerald-600"></i>
                             <span>វត្តមានទាំងអស់ (Mark All)</span>
                         </button>
@@ -319,7 +331,7 @@
                     <h2 class="font-bold text-slate-800 text-base">គ្រប់គ្រងបញ្ជីឈ្មោះសិស្ស</h2>
                     <p class="text-xs text-slate-500">បន្ថែម កែប្រែ ឬលុបព័ត៌មានសិស្សក្នុងថ្នាក់</p>
                 </div>
-                <button onclick="openStudentModal()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md transition flex items-center justify-center space-x-2 active:scale-95">
+                <button id="addStudentBtn" onclick="openStudentModal()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md transition flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fa-solid fa-user-plus"></i>
                     <span>បន្ថែមសិស្សថ្មី</span>
                 </button>
@@ -332,6 +344,49 @@
         </section>
 
     </main>
+
+    <!-- Modal for Admin Login -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+            <div class="bg-gradient-to-r from-brand-800 to-brand-600 text-white p-5 text-center relative">
+                <button onclick="closeLoginModal()" class="absolute right-4 top-4 text-white/80 hover:text-white text-lg w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-2 border border-white/20">
+                    <i class="fa-solid fa-user-shield text-2xl text-amber-300"></i>
+                </div>
+                <h3 class="font-bold text-lg">ចូលប្រព័ន្ធជា Admin</h3>
+                <p class="text-xs text-brand-100 mt-0.5">សូមបញ្ចូល Username និង Password របស់អ្នក</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" id="loginUsername" required placeholder="បញ្ចូល Username..." class="w-full border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="password" id="loginPassword" required placeholder="បញ្ចូល Password..." class="w-full border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeLoginModal()" class="w-1/2 py-2.5 border border-slate-300 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50 transition">
+                        បោះបង់
+                    </button>
+                    <button type="submit" class="w-1/2 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold shadow-md transition flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-right-to-bracket mr-1"></i> ចូលប្រព័ន្ធ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal for Adding/Editing Student -->
     <div id="studentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -357,7 +412,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">គោត្តមនាម និងនាម (Name) <span class="text-rose-500">*</span></label>
-                    <input type="text" id="studentNameInput" required placeholder="ឧទាហរណ៍: SOK CHANPISEY" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    <input type="text" id="studentNameInput" required placeholder="ឧទាហរណ៍: សុខ ចាន់" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
 
                 <div>
@@ -407,6 +462,13 @@
 
     <!-- JavaScript Logic -->
     <script>
+        // Admin Credentials Config
+        const ADMIN_USER = "H411";
+        const ADMIN_PASS = "789@H411.Reth";
+
+        // Current Role State ('visitor' or 'admin')
+        let currentUserRole = 'visitor';
+
         // Sample Khmer Student Data for initial load
         const initialStudents = [
             { id: "STU-001", name: "សុខ ចាន់", gender: "ប្រុស", avatar: "👨‍🎓" },
@@ -425,6 +487,7 @@
 
         // Initialize App
         window.addEventListener('DOMContentLoaded', () => {
+            checkAuthRole();
             loadData();
             initClock();
             
@@ -433,10 +496,93 @@
             document.getElementById('attendanceDate').value = today;
 
             // Render current view
+            updateAuthUI();
             loadAttendanceForSelectedDate();
             renderStudentsList();
             renderReportTable();
         });
+
+        // Auth Role Check & Persistence
+        function checkAuthRole() {
+            const savedRole = localStorage.getItem('khmer_user_role');
+            if (savedRole === 'admin') {
+                currentUserRole = 'admin';
+            } else {
+                currentUserRole = 'visitor';
+            }
+        }
+
+        function updateAuthUI() {
+            const authContainer = document.getElementById('authStatusContainer');
+            const visitorBanner = document.getElementById('visitorBanner');
+            const addStudentBtn = document.getElementById('addStudentBtn');
+            const markAllBtn = document.getElementById('markAllBtn');
+
+            if (currentUserRole === 'admin') {
+                visitorBanner.classList.add('hidden');
+                authContainer.innerHTML = `
+                    <span class="bg-amber-400/20 text-amber-200 border border-amber-400/30 text-xs px-2.5 py-1 rounded-lg font-semibold flex items-center">
+                        <i class="fa-solid fa-user-shield mr-1.5 text-amber-300"></i> Admin
+                    </span>
+                    <button onclick="handleLogout()" class="bg-rose-500/80 hover:bg-rose-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center transition border border-rose-400/30 active:scale-95" title="ចាកចេញ">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> ចាកចេញ
+                    </button>
+                `;
+                if (addStudentBtn) addStudentBtn.disabled = false;
+                if (markAllBtn) markAllBtn.disabled = false;
+            } else {
+                visitorBanner.classList.remove('hidden');
+                authContainer.innerHTML = `
+                    <span class="bg-white/10 text-white border border-white/20 text-xs px-2.5 py-1 rounded-lg font-medium flex items-center">
+                        <i class="fa-solid fa-eye mr-1.5 opacity-80"></i> Visitor
+                    </span>
+                    <button onclick="openLoginModal()" class="bg-white hover:bg-slate-100 text-brand-800 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center transition shadow-sm active:scale-95">
+                        <i class="fa-solid fa-key mr-1 text-brand-600"></i> ចូលប្រព័ន្ធ
+                    </button>
+                `;
+                if (addStudentBtn) addStudentBtn.disabled = true;
+                if (markAllBtn) markAllBtn.disabled = true;
+            }
+        }
+
+        // Login Modal Handlers
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('loginUsername').focus();
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+
+            if (u === ADMIN_USER && p === ADMIN_PASS) {
+                currentUserRole = 'admin';
+                localStorage.setItem('khmer_user_role', 'admin');
+                closeLoginModal();
+                updateAuthUI();
+                renderAttendanceList();
+                renderStudentsList();
+                showToast("ចូលប្រព័ន្ធជា Admin ជោគជ័យ!");
+            } else {
+                showToast("Username ឬ Password មិនត្រឹមត្រូវទេ!", true);
+            }
+        }
+
+        function handleLogout() {
+            currentUserRole = 'visitor';
+            localStorage.setItem('khmer_user_role', 'visitor');
+            updateAuthUI();
+            renderAttendanceList();
+            renderStudentsList();
+            showToast("បានចាកចេញពីប្រព័ន្ធ");
+        }
 
         // Clock Function
         function initClock() {
@@ -558,6 +704,8 @@
                 return;
             }
 
+            const isAdmin = currentUserRole === 'admin';
+
             container.innerHTML = filteredStudents.map((student, idx) => {
                 const status = currentRecord[student.id] || 'P'; // Default Present 'P'
 
@@ -581,41 +729,41 @@
                     <!-- Attendance Buttons -->
                     <div class="flex items-center justify-between sm:justify-end space-x-1.5 sm:space-x-2 w-full sm:w-auto overflow-x-auto py-1">
                         <!-- Present (P) -->
-                        <button onclick="setAttendance('${student.id}', 'P')" class="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
+                        <button ${!isAdmin ? 'disabled onclick="promptAdminLogin()"' : `onclick="setAttendance('${student.id}', 'P')"`} class="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
                             status === 'P' 
                             ? 'bg-emerald-600 text-white ring-2 ring-emerald-600 ring-offset-1 shadow-md' 
                             : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600'
-                        }">
+                        } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''}">
                             <i class="fa-solid fa-check"></i>
                             <span>វត្តមាន</span>
                         </button>
 
                         <!-- Permission (L) -->
-                        <button onclick="setAttendance('${student.id}', 'L')" class="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
+                        <button ${!isAdmin ? 'disabled onclick="promptAdminLogin()"' : `onclick="setAttendance('${student.id}', 'L')"`} class="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
                             status === 'L' 
                             ? 'bg-amber-500 text-white ring-2 ring-amber-500 ring-offset-1 shadow-md' 
                             : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-600'
-                        }">
+                        } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''}">
                             <i class="fa-solid fa-envelope"></i>
                             <span>ច្បាប់</span>
                         </button>
 
                         <!-- Absent (A) -->
-                        <button onclick="setAttendance('${student.id}', 'A')" class="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
+                        <button ${!isAdmin ? 'disabled onclick="promptAdminLogin()"' : `onclick="setAttendance('${student.id}', 'A')"`} class="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
                             status === 'A' 
                             ? 'bg-rose-600 text-white ring-2 ring-rose-600 ring-offset-1 shadow-md' 
                             : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600'
-                        }">
+                        } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''}">
                             <i class="fa-solid fa-xmark"></i>
                             <span>អវត្តមាន</span>
                         </button>
 
                         <!-- Late (T) -->
-                        <button onclick="setAttendance('${student.id}', 'T')" class="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
+                        <button ${!isAdmin ? 'disabled onclick="promptAdminLogin()"' : `onclick="setAttendance('${student.id}', 'T')"`} class="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 ${
                             status === 'T' 
                             ? 'bg-blue-600 text-white ring-2 ring-blue-600 ring-offset-1 shadow-md' 
                             : 'bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600'
-                        }">
+                        } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''}">
                             <i class="fa-solid fa-clock"></i>
                             <span>យឺត</span>
                         </button>
@@ -625,8 +773,17 @@
             }).join('');
         }
 
+        function promptAdminLogin() {
+            showToast("សូមចូលប្រព័ន្ធជា Admin ដើម្បីកែប្រែវត្តមាន!", true);
+            openLoginModal();
+        }
+
         // Set attendance for single student
         function setAttendance(studentId, status) {
+            if (currentUserRole !== 'admin') {
+                promptAdminLogin();
+                return;
+            }
             const key = getCurrentKey();
             if (!attendanceRecords[key]) {
                 attendanceRecords[key] = {};
@@ -639,6 +796,10 @@
 
         // Mark All Present Shortcut
         function markAllPresent() {
+            if (currentUserRole !== 'admin') {
+                promptAdminLogin();
+                return;
+            }
             const key = getCurrentKey();
             if (!attendanceRecords[key]) {
                 attendanceRecords[key] = {};
@@ -793,6 +954,8 @@
                 return;
             }
 
+            const isAdmin = currentUserRole === 'admin';
+
             grid.innerHTML = students.map(s => `
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex items-center justify-between">
                     <div class="flex items-center space-x-3 space-x-reverse">
@@ -807,6 +970,7 @@
                             </span>
                         </div>
                     </div>
+                    ${isAdmin ? `
                     <div class="flex items-center space-x-1 no-print">
                         <button onclick="editStudent('${s.id}')" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition" title="កែប្រែ">
                             <i class="fa-solid fa-pen-to-square"></i>
@@ -815,12 +979,17 @@
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
+                    ` : ''}
                 </div>
             `).join('');
         }
 
         // Student Modal Handlers
         function openStudentModal(isEdit = false) {
+            if (currentUserRole !== 'admin') {
+                promptAdminLogin();
+                return;
+            }
             document.getElementById('studentModal').classList.remove('hidden');
             if (!isEdit) {
                 document.getElementById('modalTitle').innerText = "បន្ថែមសិស្សថ្មី";
@@ -837,6 +1006,11 @@
 
         function saveStudent(e) {
             e.preventDefault();
+            if (currentUserRole !== 'admin') {
+                promptAdminLogin();
+                return;
+            }
+
             const editId = document.getElementById('studentEditId').value;
             const id = document.getElementById('studentIdInput').value.trim();
             const name = document.getElementById('studentNameInput').value.trim();
@@ -872,6 +1046,10 @@
         }
 
         function editStudent(id) {
+            if (currentUserRole !== 'admin') {
+                promptAdminLogin();
+                return;
+            }
             const student = students.find(s => s.id === id);
             if (!student) return;
 
@@ -886,6 +1064,10 @@
         }
 
         function deleteStudent(id) {
+            if (currentUserRole !== 'admin') {
+                promptAdminLogin();
+                return;
+            }
             if (confirm("តើអ្នកពិតជាចង់លុបសិស្សនេះចេញពីប្រព័ន្ធមែនទេ?")) {
                 students = students.filter(s => s.id !== id);
                 saveStudents();
